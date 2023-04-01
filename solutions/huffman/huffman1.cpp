@@ -159,6 +159,7 @@ HuffNode* buildHuffTree(const std::map<char,uint32_t>& freq){
         return pq.top();
 }
 
+
 void generateCodes(HuffNode* tree, std::map<char,HuffEntry>& codes, uint32_t code, uint32_t len){
     if(!tree->left_){
         codes[tree->sym_] = *new HuffEntry(tree->sym_,new HuffCode(code,len));
@@ -224,77 +225,73 @@ void huffmanEncode(const std::string& fin, const std::string& fout){
 
 }
 
-
-void huffmanDecode(const std::string& input, const std::string& output)
+void huffmanDecode(const std::string& input_filename, const std::string& output_filename)
 {
-	using namespace std;
-	ifstream is(input, ios::binary);
-	if (!is) {
-		cerr << "Cannot open input file\n";
-	}
+    // Open input file
+    std::ifstream input_file(input_filename, std::ios::binary);
+    if (!input_file.is_open()) {
+        throw std::runtime_error("Failed to open input file");
+    }
 
-	string MagicNumber(8,' ');
-	raw_read(is, MagicNumber[0], 8);
-	if (MagicNumber != "HUFFMAN1") {
-		cerr << "Wrong input format\n";
-	}
+    // Read magic number
+    const std::string expected_magic_number = "HUFFMAN1";
+    std::string magic_number(8, ' ');
+    raw_read(input_file, magic_number[0], 8);
+    if (magic_number != expected_magic_number) {
+        throw std::runtime_error("Wrong input format");
+    }
+    // Read Huffman table
+    const size_t num_table_entries = input_file.get() ? input_file.get() : 256;
+    bitreader br(input_file);
+    std::vector<HuffEntry> table;
+    table.reserve(num_table_entries);
+    for (size_t i = 0; i < num_table_entries; ++i) {
+        HuffEntry e;
+        input_file.read(&e.sym_,1);
+        br.read(e.code_->len_, 5);
+        br.read(e.code_->code_, e.code_->len_);
+        table.push_back(e);
+    }
+    std::sort(std::begin(table), std::end(table), 
+	[] (const auto& lhs, const auto& rhs) {
+    return lhs.code_->len_ < rhs.code_->len_;
+});
+	input_file.close();
+    // Read number of symbols
+    uint32_t num_symbols = 0;
+    br.read(num_symbols, 32);
 
-	size_t TableEntries = is.get();
-	if (TableEntries == 0) {
-		TableEntries = 256;
-	}
+    // Open output file
+    std::ofstream output_file(output_filename, std::ios::binary);
+    if (!output_file.is_open()) {
+        throw std::runtime_error("Failed to open output file");
+    }
 
-	bitreader br(is);
-	struct triplet {
-		uint32_t sym_;
-		uint32_t len_;
-		uint32_t code_;
-
-		bool operator<(const triplet& rhs) const {
-			return len_ < rhs.len_;
-		}
-	};
-	vector<triplet> table;
-	for (size_t i = 0; i < TableEntries; ++i) {
-		triplet t;
-		br.read(t.sym_, 8);
-		br.read(t.len_, 5);
-		br.read(t.code_, t.len_);
-		table.push_back(t);
-	}
-	sort(begin(table), end(table));
-
-	uint32_t NumSymbols;
-	br.read(NumSymbols, 32);
-
-	ofstream os(output, ios::binary);
-	if (!os) {
-		perror("Cannot open output file\n");
-	}
-
-	for (size_t i = 0; i < NumSymbols; ++i) {
-		uint32_t len = 0, code = 0;
-		size_t pos = 0;
-		do {
-			while (table[pos].len_ > len) {
-				uint32_t bit;
-				br.read(bit, 1);
-				code = (code << 1) | bit;
-				++len;
-			}
-			if (code == table[pos].code_) {
-				break;
-			}
-			++pos;
-		} while (pos < table.size());
-		if (pos == table.size()) {
-			perror("This shouldn't happen!\n");
-		}
-		os.put(table[pos].sym_);
-	}
+    // Decode symbols
+    for (size_t i = 0; i < num_symbols; ++i) {
+        uint32_t len = 0, code = 0;
+        size_t pos = 0;
+        while (pos < table.size()) {
+            while (table[pos].code_->len_ > len) {
+                uint32_t bit;
+                if (!br.read(bit, 1)) {
+                    throw std::runtime_error("Failed to read input file");
+                }
+                code = (code << 1) | bit;
+                ++len;
+            }
+            if (code == table[pos].code_->code_) {
+                output_file.put(table[pos].sym_);
+                break;
+            }
+            ++pos;
+        }
+        if (pos == table.size()) {
+            throw std::runtime_error("Symbol not found in Huffman table");
+        }
+    }
+	output_file.close();
 }
-
-
 int main(int argc, char** argv){
     if(argc != 4){
         std::cerr << "\nSyntax error.\nUsage: huffman1 [c/C|d/D] <input_file> <output_file>\n";
