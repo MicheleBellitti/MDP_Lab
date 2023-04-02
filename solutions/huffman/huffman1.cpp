@@ -1,9 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <algorithm>
 #include <queue>
+#include <bitset>
 
 template<typename T>
 std::istream& raw_read(std::istream& is, T& num, size_t size = sizeof(T))
@@ -112,7 +113,7 @@ struct HuffNode{
 // comprare operator
 struct Compare {
     bool operator() (HuffNode* a, HuffNode* b) {
-        return a->freq_ >= b->freq_;
+        return a->freq_ > b->freq_;
     }
 };
 struct HuffCode{
@@ -140,7 +141,7 @@ struct HuffEntry{
 };
 
 
-HuffNode* buildHuffTree(const std::map<char,uint32_t>& freq){
+HuffNode* buildHuffTree(const std::unordered_map<char,uint32_t>& freq){
 
     std::priority_queue<HuffNode*,std::vector<HuffNode*>,Compare> pq;
     for(auto& p:freq){
@@ -160,12 +161,12 @@ HuffNode* buildHuffTree(const std::map<char,uint32_t>& freq){
 }
 
 
-void generateCodes(HuffNode* tree, std::map<char,HuffEntry>& codes, uint32_t code, uint32_t len){
+void generateCodes(HuffNode* tree, std::unordered_map<char,HuffEntry>& codes, uint32_t code, uint32_t len){
     if(!tree->left_){
         codes[tree->sym_] = *new HuffEntry(tree->sym_,new HuffCode(code,len));
     }
         else{
-            generateCodes(tree->left_, codes, code << 1|1, len+1);
+            generateCodes(tree->left_, codes, (code << 1) | 1 , len+1);
             generateCodes(tree->right_, codes, code << 1, len+1);
         }
 }
@@ -185,13 +186,13 @@ void huffmanEncode(const std::string& fin, const std::string& fout){
     // read bytes and compute frequencies
     char c;
     uint32_t num_symbols = 0;
-    std::map<char,uint32_t> freq;
+    std::unordered_map<char,uint32_t> freq;
     while(is.read(&c,1)){
         freq[c]++;
         num_symbols++;
     }
     HuffNode* tree = buildHuffTree(freq);
-    std::map<char,HuffEntry> huff_table;
+    std::unordered_map<char,HuffEntry> huff_table;
     generateCodes(tree, huff_table,0,0);
 
     // write the codes' table
@@ -218,7 +219,9 @@ void huffmanEncode(const std::string& fin, const std::string& fout){
         if(c == EOF)
             break;
         bw(huff_table[c].code_->code_,huff_table[c].code_->len_);
+        std::cout << huff_table[c].code_->code_;
     }
+    std::cout << std::endl;
     is.close();
     os.close();
 
@@ -245,22 +248,22 @@ void huffmanDecode(const std::string& input, const std::string& output)
 	}
 
 	bitreader br(is);
-	struct triplet {
+	struct entry {
 		uint32_t sym_;
 		uint32_t len_;
 		uint32_t code_;
 
-		bool operator<(const triplet& rhs) const {
+		bool operator<(const entry& rhs) const {
 			return len_ < rhs.len_;
 		}
 	};
-	vector<triplet> table;
+	vector<entry> table;
 	for (size_t i = 0; i < TableEntries; ++i) {
-		triplet t;
-		br.read(t.sym_, 8);
-		br.read(t.len_, 5);
-		br.read(t.code_, t.len_);
-		table.push_back(t);
+		entry e;
+		br.read(e.sym_, 8);
+		br.read(e.len_, 5);
+		br.read(e.code_, e.len_);
+		table.push_back(e);
 	}
 	sort(begin(table), end(table));
 
@@ -273,27 +276,31 @@ void huffmanDecode(const std::string& input, const std::string& output)
 	}
 
 	for (size_t i = 0; i < NumSymbols; ++i) {
-		uint32_t len = 0, code = 0;
-		size_t pos = 0;
-		do {
-			while (table[pos].len_ > len) {
-				uint32_t bit;
-				br.read(bit, 1);
-				code = (code << 1) | bit;
-				++len;
-			}
-			if (code == table[pos].code_) {
-				break;
-			}
-			++pos;
-		} while (pos < table.size());
-		if (pos == table.size()) {
-			perror("This shouldn't happen!\n");
-		}
-		os.put(table[pos].sym_);
-        is.close();
-        os.close();
-	}
+        uint32_t bit=0,len=0,code=0;
+        bool found = 0;
+        while(1){
+            if(found || is.eof())
+                break;                
+            // read 1 bit
+            br.read(bit,1);
+            code = code << 1 | bit;
+            len++;
+            //std::cout << code << endl;
+            for(auto& cur:table){
+                //std::cout << cur.code_<< ' ';
+                if(cur.code_ == code && cur.len_ == len){
+                    
+                    os.put(cur.sym_);
+                    found = !found;
+                    break;
+                }
+            }
+            //std::cout << endl;
+        }
+
+    }
+    is.close();
+    os.close();
 }
 int main(int argc, char** argv){
     if(argc != 4){
