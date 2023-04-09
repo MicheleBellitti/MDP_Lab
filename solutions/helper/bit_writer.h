@@ -1,5 +1,5 @@
-#ifndef BITWRITER_H
-#define BITWRITER_H
+#ifndef BIT_WRITER_H
+#define BIT_WRITER_H
 
 #include <iostream>
 #include <cstdint>
