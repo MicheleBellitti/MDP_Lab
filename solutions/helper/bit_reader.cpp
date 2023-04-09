@@ -6,6 +6,13 @@ std::istream &raw_read(std::istream &is, T &val, size_t size) {
 }
 
 
+// Specialization for char type
+template<>
+std::istream &raw_read<char>(std::istream &is, char &val, size_t size) {
+    return is.read(&val, size);
+}
+bitreader::bitreader(std::istream &is) : is_(is) {}
+
 uint32_t bitreader::read_bit() {
 	if (n_ == 0) {
 		raw_read(is_, buffer_);
