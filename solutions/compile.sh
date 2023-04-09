@@ -7,4 +7,4 @@ if [ $# -eq 0 ]; then
 fi
 
 file_name=$1
-g++ $file_name.cpp -o ${file_name}.out
+g++ -std=c++20 -Wall $file_name.cpp -o ${file_name}.out
