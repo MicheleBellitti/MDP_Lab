@@ -7,4 +7,11 @@ if [ $# -eq 0 ]; then
 fi
 
 file_name=$1
-g++ -std=c++20 -Wall $file_name.cpp -o ${file_name}.out
+dir=`pwd`
+cd ../helper
+ls
+g++ -c bit_reader.cpp -o bit_reader.o
+g++ -c bit_writer.cpp -o bit_writer.o
+cd $dir
+
+g++ -std=c++17 -Wall $file_name.cpp ../helper/bit_reader.o ../helper/bit_writer.o -o ${file_name}.out
