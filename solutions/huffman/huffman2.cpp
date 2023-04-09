@@ -85,8 +85,8 @@ void generateCodes(HuffNode* tree, std::unordered_map<char,HuffEntry>& codes, ui
         codes[tree->sym_] = *new HuffEntry(tree->sym_,new HuffCode(code,len));
     }
         else{
-            generateCodes(tree->left_, codes, (code << 1) | 1 , len+1);
-            generateCodes(tree->right_, codes, code << 1, len+1);
+            generateCodes(tree->left_, codes, code << 1, len+1);
+            generateCodes(tree->right_, codes, (code << 1) | 1, len+1);
         }
 }
 
@@ -139,7 +139,7 @@ void huffmanEncode(const std::string& fin, const std::string& fout){
     bitwriter bw(os);
     os << MAGIC_NUMBER;
     os.put(static_cast<char>(huff_table.size()));
-
+    cout << "-------\n";
     for(auto& entry :huff_table){
         
         std::cout  << "symbol: " << entry.first << '|';
@@ -147,8 +147,9 @@ void huffmanEncode(const std::string& fin, const std::string& fout){
         std::cout << "code: " << entry.second.code_->code_<< std::endl;
         bw.write(entry.first,8);
         bw.write(entry.second.code_->len_, 5);
-        bw.write(entry.second.code_->code_, entry.second.code_->len_);
     }
+    cout << "-------\n";
+
     bw.write(num_symbols,32);
     is.clear();
     is.seekg(0);
@@ -196,7 +197,7 @@ void huffmanDecode(const std::string& input, const std::string& output)
 		}
 	};
 	vector<entry> table;
-    uint32_t code = 0, len=1;
+    uint32_t code = -1, len=1;
 	for (size_t i = 0; i < TableEntries; ++i) {
 		entry e;
 		e.sym_ = br.read(8);
