@@ -163,11 +163,11 @@ HuffNode* buildHuffTree(const std::unordered_map<char,uint32_t>& freq){
 
 void generateCodes(HuffNode* tree, std::unordered_map<char,HuffEntry>& codes, uint32_t code, uint32_t len){
     if(!tree->left_){
-        codes[tree->sym_] = *new HuffEntry(tree->sym_,new HuffCode(code,len));
+        codes[tree->sym_] = *new HuffEntry(tree->sym_,new HuffCode(code,static_cast<uint32_t>(log2(len)+1)));
     }
         else{
-            generateCodes(tree->left_, codes, (code << 1) | 1 , len+1);
-            generateCodes(tree->right_, codes, code << 1, len+1);
+            generateCodes(tree->left_, codes, code << 1, len+1);
+            generateCodes(tree->right_, codes, code << 1 | 1, len+1);
         }
 }
 
