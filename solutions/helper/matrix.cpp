@@ -1,7 +1,7 @@
 #include "matrix.h"
-T T::operator*(T& other){
+/*T T::operator*(T& other){
     return T(T::r*other.r, T::g*other.r, T::b*other.b);
-}
+}*/
 Matrix::Matrix(int rows, int cols){
     if(rows == 0 || cols == 0){
         throw std::out_of_range("Index out of range");
@@ -93,7 +93,7 @@ void Matrix::vflip(){
 }
 
 void Matrix::hflip(){
-    for(size_t r=0;r<rows_/2;r++){
+    for(size_t r=0;r<rows_;r++){
         for(size_t c=0;c<cols_/2;c++){
             std::swap(data_[r][c], data_[r][cols_-c-1]);
         }
@@ -106,7 +106,8 @@ void Matrix::print_mat(){
      // Print the body of the matrix.
     for (int i = 0; i < rows_; i++) {
         for (int j = 0; j < cols_; j++) {
-            std::cout << "r: " << data_[i][j].r << ", g: " << data_[i][j].g << ", b: " << data_[i][j].r  << "||";
+
+            std::cout << "r: " << data_[i][j] << "||";
         }
     std::cout << std::endl;
     }
