@@ -35,7 +35,7 @@ void saveRGBPAM(const std::string& filename, Matrix& image_data){
 }
 
 /*void saveGreyscalePAM(const std::string& filename, Matrix& image_data){
-
+    // function for saving a greyscale image in the PAM format
     std::ofstream os(filename+".pam", std::ios::binary);
 
     // header for rgb
@@ -54,9 +54,9 @@ void saveRGBPAM(const std::string& filename, Matrix& image_data){
     // write raster
     for(size_t i=1;i<image_data.rows();i++){
         for(size_t j=0;j<image_data.cols();j++){
-            os.put(image_data(i, j).r);
-            os.put(image_data(i, j).g);
-            os.put(image_data(i, j).b);
+        // 1-channel images
+            os.put(image_data(i, j));
+            
         }
     }
 
@@ -131,14 +131,14 @@ int main(int argc, char** argv){
      **/
     if (strcmp(argv[1], "grey") == 0)
     {
-        Matrix data(256, 256);
+        /* Matrix data(256, 256);
         for(size_t i=0;i<data.rows();i++){
 
-                //data[i].assign(data[i].size(), i);
+                data[i].assign(data[i].size(), i);
         }
 
-        //saveGreyscalePAM("grey_level",data);
-
+        saveGreyscalePAM("grey_level",data);
+*/
     }
     
 
@@ -150,12 +150,13 @@ int main(int argc, char** argv){
      * Save the image in PAM format. Verify that the image is viewable in XnView.
      */
     else if(strcmp(argv[1], "flip") == 0){
-
+        /*
         Matrix frog = load_pam("frog");
         // flip vertically the image
         frog.hflip();
         // save the flipped image
-        //saveGreyscalePAM("frog-flipped", frog);
+        saveGreyscalePAM("frog-flipped", frog);
+        */
     }
 
 
