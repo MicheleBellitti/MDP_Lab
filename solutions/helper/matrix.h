@@ -2,12 +2,23 @@
 #define MATRIX_H
 #include <vector>
 #include <iostream>
-/* generic matrix that accepts evey kind of numeric data */
-//template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr> 
 
 
-#define T uint8_t
-
+struct T{
+    uint8_t r, g, b;
+    T(){
+        r = 0;
+        g = 255;
+        b = 0;
+    }
+    T(uint8_t rr, uint8_t gg, uint8_t bb){
+        r = rr;
+        g = gg;
+        b = gg;
+    }
+    T operator*(T& other);
+    
+};
 class Matrix {
     
     size_t rows_, cols_;

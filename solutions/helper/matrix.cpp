@@ -1,5 +1,7 @@
 #include "matrix.h"
-
+T T::operator*(T& other){
+    return T(T::r*other.r, T::g*other.r, T::b*other.b);
+}
 Matrix::Matrix(int rows, int cols){
     if(rows == 0 || cols == 0){
         throw std::out_of_range("Index out of range");
@@ -48,11 +50,11 @@ T Matrix::det(){
         return std::numeric_limits<T>::max();
     }
 
-    T prod = 1;
+    T prod = T();
     for(size_t r=0;r<rows_;r++){
         for(size_t c=0;c<cols_;c++){
             if(r == c){
-                prod *= data_[r][c];
+                prod = prod * data_[r][c];
             }
         }
     }
@@ -104,7 +106,7 @@ void Matrix::print_mat(){
      // Print the body of the matrix.
     for (int i = 0; i < rows_; i++) {
         for (int j = 0; j < cols_; j++) {
-            std::cout << data_[i][j] << " ";
+            std::cout << "r: " << data_[i][j].r << ", g: " << data_[i][j].g << ", b: " << data_[i][j].r  << "||";
         }
     std::cout << std::endl;
     }
