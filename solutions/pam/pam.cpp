@@ -4,8 +4,37 @@
 #include <fstream>
 #include <algorithm>
 
+void saveRGBPAM(const std::string& filename, Matrix& image_data){
 
-void saveGreyscalePAM(const std::string& filename, Matrix& image_data){
+    std::ofstream os(filename+".pam", std::ios::binary);
+
+    // header for rgb
+    os.write("P7\n",3);
+    os.write("WIDTH ",6);
+    os.put(image_data.cols());
+    os.put('\n');
+   os.write("HEIGHT ",7);
+    os.put(image_data.rows());
+    os.put('\n');
+    os.write("DEPTH 3\n", 8);
+    os.write("MAXVAL 255\n", 11);
+    os.write("TUPLTYPE RGB\n", 19);
+    os.write("ENDHDR\n", 7);
+
+    // write raster
+    for(size_t i=1;i<image_data.rows();i++){
+        for(size_t j=0;j<image_data.cols();j++){
+            os.put(image_data(i, j).r);
+            os.put(image_data(i, j).g);
+            os.put(image_data(i, j).b);
+        }
+    }
+
+    os.close();
+
+}
+
+/*void saveGreyscalePAM(const std::string& filename, Matrix& image_data){
 
     std::ofstream os(filename+".pam", std::ios::binary);
 
@@ -25,13 +54,16 @@ void saveGreyscalePAM(const std::string& filename, Matrix& image_data){
     // write raster
     for(size_t i=1;i<image_data.rows();i++){
         for(size_t j=0;j<image_data.cols();j++){
-            os.put(image_data(i, j));
+            os.put(image_data(i, j).r);
+            os.put(image_data(i, j).g);
+            os.put(image_data(i, j).b);
         }
     }
 
     os.close();
 
 }
+*/
 
 auto load_pam(const std::string& filename){
     std::ifstream is(filename+".pam",std::ios::binary);
@@ -76,7 +108,9 @@ auto load_pam(const std::string& filename){
 
     for(size_t x=0;x<frog.rows();x++){
         for(size_t y=0;y<frog.cols();y++){
-            frog(x, y) = is.get();
+            frog(x, y).r = is.get();
+            frog(x, y).g = is.get();
+            frog(x, y).b = is.get();
         }
     }
     is.close();
@@ -100,10 +134,10 @@ int main(int argc, char** argv){
         Matrix data(256, 256);
         for(size_t i=0;i<data.rows();i++){
 
-                data[i].assign(data[i].size(), i);
+                //data[i].assign(data[i].size(), i);
         }
 
-        saveGreyscalePAM("grey_level",data);
+        //saveGreyscalePAM("grey_level",data);
 
     }
     
@@ -121,7 +155,7 @@ int main(int argc, char** argv){
         // flip vertically the image
         frog.hflip();
         // save the flipped image
-        saveGreyscalePAM("frog-flipped", frog);
+        //saveGreyscalePAM("frog-flipped", frog);
     }
 
 
@@ -134,6 +168,15 @@ int main(int argc, char** argv){
      * Save the image in PAM format. Verify that the image is viewable in XnView.
      */
     else if(strcmp(argv[1], "mirror") == 0){
+        std::cout << "loading image.." << std::endl;
+        Matrix img = load_pam("laptop");
+        // flip horizontally the image
+        std::cout << "flipping image" << std::endl;
+        img.hflip();
+        // save the flipped image
+        std::cout << "saving image.." << std::endl;
+        saveRGBPAM("laptop-mirrored", img);
+        std::cout << "program ended." << std::endl;
 
     }
     else{
