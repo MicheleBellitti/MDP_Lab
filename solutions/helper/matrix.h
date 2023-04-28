@@ -10,6 +10,21 @@ struct T {
     T operator+ (T& other);
     T operator* (T& other);
 
+struct T{
+    uint8_t r, g, b;
+    T(){
+        r = 0;
+        g = 255;
+        b = 0;
+    }
+    T(uint8_t rr, uint8_t gg, uint8_t bb){
+        r = rr;
+        g = gg;
+        b = gg;
+    }
+    T operator*(T& other);
+    
+};
 };
 
 class Matrix {

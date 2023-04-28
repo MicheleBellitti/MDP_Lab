@@ -63,11 +63,11 @@ T Matrix::det(){
         exit(1);
     }
 
-    T prod = {1, 1, 1};
+    T prod = 1;
     for(size_t r=0;r<rows_;r++){
         for(size_t c=0;c<cols_;c++){
             if(r == c){
-                prod = prod* data_[r][c];
+                prod *= data_[r][c];
             }
         }
     }
@@ -106,7 +106,7 @@ void Matrix::vflip(){
 }
 
 void Matrix::hflip(){
-    for(size_t r=0;r<rows_/2;r++){
+    for(size_t r=0;r<rows_;r++){
         for(size_t c=0;c<cols_/2;c++){
             std::swap(data_[r][c], data_[r][cols_-c-1]);
         }
@@ -119,7 +119,7 @@ void Matrix::print_mat(){
      // Print the body of the matrix.
     for (int i = 0; i < rows_; i++) {
         for (int j = 0; j < cols_; j++) {
-            std::cout << "r: " << data_[i][j].r << " g:"  << data_[i][j].g << " b:" << data_[i][j].b << "||";
+            std::cout << data_[i][j] << " ";
         }
     std::cout << std::endl;
     }
