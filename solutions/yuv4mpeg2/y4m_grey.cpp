@@ -57,13 +57,14 @@ bool y4m_extract_grey(const std::string& filename, std::vector<mat<uint8_t> >& f
         if(is.eof())
             break;
         std::string fr;
-        is.read(&fr[0],6);
+        is >> fr;
+        std::cout << fr << std::endl;
         std::string frame_i, frame_x;
         for(size_t j=0;j<2;j++){
             int frame_tag = is.get();
             switch (frame_tag)
             {
-            case 'I':
+            break;case 'I':
                 is >> frame_i;
                 break;
             case 'X':
@@ -73,11 +74,12 @@ bool y4m_extract_grey(const std::string& filename, std::vector<mat<uint8_t> >& f
             default:
                 break;
             }
+            std::cout << frame_tag << " frame headers: " << frame_x << frame_i << std::endl;
         }
         mat<uint8_t> frame(w, h);
         std::string data;
         is >> data;
-        //std::cout << fr << std::endl;
+        
         //frames.push_back(frame);
 
     }
@@ -89,7 +91,7 @@ bool y4m_extract_grey(const std::string& filename, std::vector<mat<uint8_t> >& f
 
 int main(){
     std::vector<mat<uint8_t> > frames;
-    if(y4m_extract_grey("utils/test1.y4m", frames)){
+    if(y4m_extract_grey("foreman_cif.y4m", frames)){
         for(int i=0;i<frames.size();i++){
             std::stringstream ss;
             ss <<  std::setfill('0');
