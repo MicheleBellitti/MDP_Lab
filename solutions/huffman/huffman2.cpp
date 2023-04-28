@@ -4,11 +4,98 @@
 #include <unordered_map>
 #include <vector>
 #include <queue>
-#include "../helper/bit_writer.h"
-#include "../helper/bit_reader.h"
+#include <cmath>
+//#include "../helper/bit_writer.h"
+//#include "../helper/bit_reader.h"
 #define MAGIC_NUMBER "HUFFMAN2"
 
 using namespace std;
+
+
+template<typename T>
+std::istream& raw_read(std::istream& is, T& num, size_t size = sizeof(T))
+{
+	return is.read(reinterpret_cast<char*>(&num), size);
+}
+template<typename T>
+std::ostream& raw_write(std::ostream& os, const T& num, size_t size = sizeof(T))
+{
+	return os.write(reinterpret_cast<const char*>(&num), size);
+}
+
+class bitreader {
+	std::istream& is_;
+	uint8_t buffer_;
+	size_t nbits_;
+
+	uint32_t read_bit() {
+		if (nbits_ == 0) {
+			raw_read(is_, buffer_);
+			nbits_ = 8;
+		}
+		--nbits_;
+		return (buffer_ >> nbits_) & 1;
+	}
+
+public:
+	bitreader(std::istream& is) : is_(is), nbits_(0) {}
+
+	std::istream& read(uint32_t& u, size_t n) {
+		u = 0;
+		while (n-- > 0) {
+			u = (u << 1) | read_bit();
+		}
+		return is_;
+	}
+
+	std::istream& read(int32_t& i, size_t n) {
+		uint32_t u;
+		read(u, n);
+		i = static_cast<int32_t>(u);
+		return is_;
+	}
+};
+
+class bitwriter {
+	std::ostream& os_;
+	uint8_t buffer_;
+	size_t nbits_;
+
+	std::ostream& write_bit(uint32_t u) {
+		// buffer_ = buffer_ * 2 + u % 2;
+		buffer_ = (buffer_ << 1) | (u & 1);
+		++nbits_;
+		if (nbits_ == 8) {
+			raw_write(os_, buffer_);
+			nbits_ = 0;
+		}
+		return os_;
+	}
+
+public:
+	bitwriter(std::ostream& os) : os_(os), nbits_(0) {}
+
+	~bitwriter() {
+		flush();
+	}
+
+	std::ostream& write(uint32_t u, size_t n) {
+		while (n-- > 0) {
+			write_bit(u >> n);
+		}
+		return os_;
+	}
+
+	std::ostream& operator()(uint32_t u, size_t n) {
+		return write(u, n);
+	}
+
+	void flush(uint32_t u = 0) {
+		while (nbits_ > 0) {
+			write_bit(u);
+		}
+	}
+};
 
 struct HuffNode{
     char sym_;
@@ -82,7 +169,10 @@ HuffNode* buildHuffTree(const std::unordered_map<char,uint32_t>& freq){
 
 void generateCodes(HuffNode* tree, std::unordered_map<char,HuffEntry>& codes, uint32_t code, uint32_t len){
     if(!tree->left_){
-        codes[tree->sym_] = *new HuffEntry(tree->sym_,new HuffCode(code,static_cast<uint32_t>(log2(len)+1)));
+        len = static_cast<uint32_t>(log2(code)+1);
+        if(len == 0)
+            len++;
+        codes[tree->sym_] = *new HuffEntry(tree->sym_,new HuffCode(code,len));
     }
         else{
             generateCodes(tree->left_, codes, code << 1, len+1);
@@ -200,8 +290,8 @@ void huffmanDecode(const std::string& input, const std::string& output)
     uint32_t code = -1, len=1;
 	for (size_t i = 0; i < TableEntries; ++i) {
 		entry e;
-		e.sym_ = br.read(8);
-		e.len_  = br.read(5);
+		br.read(e.sym_, 8);
+		br.read(e.len_, 5);
 		if(e.len_ > len){
             code = (code + 1) << (e.len_ - len);
             len = e.len_;
@@ -214,7 +304,7 @@ void huffmanDecode(const std::string& input, const std::string& output)
 	sort(begin(table), end(table));
 
 	uint32_t NumSymbols;
-	NumSymbols  = br.read(32);
+	br.read(NumSymbols, 32);
 
 	ofstream os(output, ios::binary);
 	if (!os) {
@@ -228,7 +318,7 @@ void huffmanDecode(const std::string& input, const std::string& output)
             if(found || is.eof())
                 break;                
             // read 1 bit
-            bit = br.read(1);
+            br.read(bit, 1);
             code = code << 1 | bit;
             len++;
             //std::cout << code << endl;

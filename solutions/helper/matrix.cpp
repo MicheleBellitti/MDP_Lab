@@ -1,4 +1,19 @@
 #include "matrix.h"
+T T::operator+ (T& other){
+    T res;
+    res.r = r + other.r;
+    res.g = g + other.g;
+    res.b = b + other.b;
+    return res;
+}
+
+T T::operator* (T& other){
+    T res;
+    res.r = r * other.r;
+    res.g = g * other.g;
+    res.b = b * other.b;
+    return res;
+}
 
 Matrix::Matrix(int rows, int cols){
     if(rows == 0 || cols == 0){
@@ -45,14 +60,14 @@ T Matrix::det(){
     // check if the matrix is squared, otherwise print an error and end the function
     if(rows_ != cols_){
         std::cout << "Error: Trying to compute the determinant of a non-squared matrix(not possible!)" << std::endl;
-        return std::numeric_limits<T>::max();
+        exit(1);
     }
 
-    T prod = 1;
+    T prod = {1, 1, 1};
     for(size_t r=0;r<rows_;r++){
         for(size_t c=0;c<cols_;c++){
             if(r == c){
-                prod *= data_[r][c];
+                prod = prod* data_[r][c];
             }
         }
     }
@@ -104,7 +119,7 @@ void Matrix::print_mat(){
      // Print the body of the matrix.
     for (int i = 0; i < rows_; i++) {
         for (int j = 0; j < cols_; j++) {
-            std::cout << data_[i][j] << " ";
+            std::cout << "r: " << data_[i][j].r << " g:"  << data_[i][j].g << " b:" << data_[i][j].b << "||";
         }
     std::cout << std::endl;
     }
