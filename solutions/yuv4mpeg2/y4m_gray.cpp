@@ -1,5 +1,5 @@
-#include "pgm.h"
-#include "ppm.h"
+#include "utils/pgm.h"
+#include "utils/ppm.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -53,7 +53,7 @@ bool y4m_extract_gray(const std::string& filename, std::vector<mat<uint8_t> >& f
     std::cout << "A: " << a << " " << " F: " << f << std::endl;
     std::cout << "I: " << I << " " << " X: " << X << std::endl;
     std::cout << "C: " << C << " " << std::endl;
-    while(true){
+    while(is.good()){
         if(is.eof())
             break;
         std::string fr;
@@ -69,6 +69,8 @@ bool y4m_extract_gray(const std::string& filename, std::vector<mat<uint8_t> >& f
             {
             break;case 'I':
                 is >> frame_i;
+                if(is.eof())
+                    break;
                 break;
             case 'X':
                 is >> frame_x;
@@ -77,8 +79,9 @@ bool y4m_extract_gray(const std::string& filename, std::vector<mat<uint8_t> >& f
             default:
                 break;
             }
+
         }
-        mat<uint8_t> frame(w, h);
+        mat<uint8_t> frame(h, w);
         std::vector<uint8_t> data(w*h);
         is.read((char*)&data[0], w*h);
         for(int i=0;i<w*h;i++){
@@ -87,18 +90,21 @@ bool y4m_extract_gray(const std::string& filename, std::vector<mat<uint8_t> >& f
         //std::cout << "data_size: " << data.size() << (int)frame(300, 400) << std::endl;
         
         frames.push_back(frame);
+        if(is.fail()) // Check for EOF after reading frame data
+        break;
 
     }
+    frames.resize(frames.size()-1);
     std::cout << "frames: " << frames.size() << std::endl;
     
     return true;
 
    
 }
-/**
+
 int main(){
     std::vector<mat<uint8_t> > frames;
-    if(y4m_extract_grey("720p_stockholm_ter.y4m", frames)){
+    if(y4m_extract_gray("720p_stockholm_ter.y4m", frames)){
         for(size_t i=0;i<frames.size();i++){
             std::stringstream ss;
             ss << "frames/frame" << i << ".pgm";
@@ -107,4 +113,4 @@ int main(){
         return EXIT_SUCCESS;
     }
     return EXIT_FAILURE;
-}*/
+}
