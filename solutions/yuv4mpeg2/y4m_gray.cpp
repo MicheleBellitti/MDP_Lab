@@ -1,5 +1,5 @@
-#include "utils/pgm.h"
-#include "utils/ppm.h"
+#include "pgm.h"
+#include "ppm.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -7,7 +7,7 @@
 #include <sstream>
 #include <string.h>
 
-bool y4m_extract_grey(const std::string& filename, std::vector<mat<uint8_t> >& frames){
+bool y4m_extract_gray(const std::string& filename, std::vector<mat<uint8_t> >& frames){
     std::ifstream is(filename, std::ios::binary);
     if(!is){
         std::cerr << "Error opening the file: " << filename << std::endl;
@@ -58,10 +58,13 @@ bool y4m_extract_grey(const std::string& filename, std::vector<mat<uint8_t> >& f
             break;
         std::string fr;
         is >> fr;
-        std::cout << fr << std::endl;
+        //std::cout << fr << std::endl;
+
         std::string frame_i, frame_x;
         for(size_t j=0;j<2;j++){
-            int frame_tag = is.get();
+            char frame_tag;
+            is.read(&frame_tag, 1);
+            //std::cout << "frame tag: " << frame_tag << std::endl;
             switch (frame_tag)
             {
             break;case 'I':
@@ -74,31 +77,34 @@ bool y4m_extract_grey(const std::string& filename, std::vector<mat<uint8_t> >& f
             default:
                 break;
             }
-            std::cout << frame_tag << " frame headers: " << frame_x << frame_i << std::endl;
         }
         mat<uint8_t> frame(w, h);
-        std::string data;
-        is >> data;
+        std::vector<uint8_t> data(w*h);
+        is.read((char*)&data[0], w*h);
+        for(int i=0;i<w*h;i++){
+            *(frame.begin()+i) = data[i];
+        }
+        //std::cout << "data_size: " << data.size() << (int)frame(300, 400) << std::endl;
         
-        //frames.push_back(frame);
+        frames.push_back(frame);
 
     }
+    std::cout << "frames: " << frames.size() << std::endl;
     
-    return false;
+    return true;
 
    
 }
-
+/**
 int main(){
     std::vector<mat<uint8_t> > frames;
-    if(y4m_extract_grey("foreman_cif.y4m", frames)){
-        for(int i=0;i<frames.size();i++){
+    if(y4m_extract_grey("720p_stockholm_ter.y4m", frames)){
+        for(size_t i=0;i<frames.size();i++){
             std::stringstream ss;
-            ss <<  std::setfill('0');
-            ss << "frame" << std::setw(3) << i << ".pgm";
+            ss << "frames/frame" << i << ".pgm";
             save_pgm(ss.str(), frames[i]);
         }
         return EXIT_SUCCESS;
     }
     return EXIT_FAILURE;
-}
+}*/
