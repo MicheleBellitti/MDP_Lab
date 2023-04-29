@@ -81,15 +81,16 @@ bool y4m_extract_gray(const std::string& filename, std::vector<mat<uint8_t> >& f
             }
 
         }
-        mat<uint8_t> frame(h, w);
-        std::vector<uint8_t> data(w*h);
-        is.read((char*)&data[0], w*h);
-        for(int i=0;i<w*h;i++){
-            *(frame.begin()+i) = data[i];
-        }
-        //std::cout << "data_size: " << data.size() << (int)frame(300, 400) << std::endl;
+        mat<uint8_t> Y(h, w);
+        mat<uint8_t> Cb(h/2, w/2);
+        mat<uint8_t> Cr(h/2, w/2);
+
+        is.read(Y.rawdata(), Y.rawsize());
         
-        frames.push_back(frame);
+        
+        
+        
+        frames.push_back(Y);
         if(is.fail()) // Check for EOF after reading frame data
         break;
 
@@ -104,7 +105,7 @@ bool y4m_extract_gray(const std::string& filename, std::vector<mat<uint8_t> >& f
 
 int main(){
     std::vector<mat<uint8_t> > frames;
-    if(y4m_extract_gray("720p_stockholm_ter.y4m", frames)){
+    if(y4m_extract_gray("foreman_cif.y4m", frames)){
         for(size_t i=0;i<frames.size();i++){
             std::stringstream ss;
             ss << "frames/frame" << i << ".pgm";
