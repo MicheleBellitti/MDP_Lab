@@ -7,11 +7,11 @@ fi
 
 file_name=$1
 dir=`pwd`
-cd ./utils
+cd utils
 ls
 g++ -std=c++20 -c pgm.cpp -o pgm.o
 g++ -std=c++20 -c ppm.cpp -o ppm.o
 
 cd $dir
 
-g++ -std=c++20 -Wall $file_name.cpp utils/pgm.o utils/ppm.o -o ${file_name}.out
+g++ -std=c++20 -Wall $file_name.cpp utils/pgm.o utils/ppm.o -o ${file_name}.exe
