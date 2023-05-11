@@ -79,11 +79,15 @@ bool load_pam_split(const std::string& filename, mat<uint8_t>& img_R, mat<uint8_
     
     for (int r = 0; r < img_R.rows(); ++r) {
 			for (int c = 0; c < img_R.cols(); ++c) {
-				img_R(r, c) = is.get();
-
-                img_G(r, c) = is.get();
+				
+                
 
                 img_B(r, c) = is.get();
+                img_R(r, c) = is.get();
+                img_G(r, c) = is.get();
+
+                
+
 
 			}
     }

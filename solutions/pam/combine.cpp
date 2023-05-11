@@ -7,7 +7,6 @@
 #include <cstdint>
 #include "mat.h"
 
-
 bool save_pam(const std::string& filename, const mat<vec3b>& img)
 {
 	std::ofstream os(filename, std::ios::binary);
@@ -90,8 +89,8 @@ int main(int argc, char** argv){
         std::cerr << "Wrong number of parameters.\nUsage: combine <filename>\n";
         return EXIT_FAILURE;
     }
-    std::string in_file(argv[1]);
-    std::string input = in_file.substr(0, in_file.size()-4);
+    std::string input(argv[1]);
+    
     std::cout << input << std::endl;
     mat<uint8_t> R;
     mat<uint8_t> G;
@@ -104,9 +103,9 @@ int main(int argc, char** argv){
     mat<vec3b> RGB(R.rows(), R.cols());
     for(int r=0;r<RGB.rows();++r){
         for(int c=0;c<RGB.cols();++c){
-            RGB(r, c)[0] = R(r, c);
-            RGB(r, c)[1] = G(r, c);
             RGB(r, c)[2] = B(r, c);
+            RGB(r, c)[1] = G(r, c);
+            RGB(r, c)[0] = R(r, c);
         }
     }
     save_pam(input+"_reconstructed.pam", RGB);
