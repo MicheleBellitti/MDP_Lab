@@ -75,11 +75,7 @@ void load_pam(const std::string& filename, mat<uint8_t>& img){
     img.resize(height, width);
     std::cout << width << "x" << height << std::endl;
 
-    for(size_t x=0;x<img.rows();x++){
-        for(size_t y=0;y<img.cols();y++){
-            img(x, y) = is.get();   
-        }
-    }
+    is.read(img.rawdata(), img.rawsize());
     is.close();
 }
 

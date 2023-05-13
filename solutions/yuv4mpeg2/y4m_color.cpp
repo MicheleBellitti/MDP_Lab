@@ -1,5 +1,5 @@
-#include "utils/pgm.h"
-#include "utils/ppm.h"
+#include "pgm.h"
+#include "ppm.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -93,15 +93,15 @@ bool y4m_extract_color(const std::string& filename, std::vector<mat<vec3b> >& fr
                 int cr = Cr(i/2, j/2);
                 cr = cr<16?16:cr>240?240:cr;
 
-                int r = 1.164*(y-16)+1.596*(cr-128);
-                int g = 1.164*(y-16)-0.813*(cr-128)-0.391*(cb-128);
-                int b = 1.164*(y-16)+2.018*(cb-128);
+                int r = 1.164 * (y - 16) + 1.596 * (cr - 128);
+                int g = 1.164 * (y - 16) - 0.813 * (cr - 128) - 0.392 * (cb - 128);
+                int b = 1.164 * (y - 16) + 2.017 * (cb - 128);
                 
-                r = r<0?0:r>255?255:r;
-                g = g<0?0:g>255?255:g;
-                b = b<0?0:b>255?255:b;
+                r = r < 0 ? 0:r > 255 ? 255:r;
+                g = g < 0 ? 0:g > 255 ? 255:g;
+                b = b < 0 ? 0:b > 255 ? 255:b;
 
-                frame_RGB(i, j) = {static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b)};
+                frame_RGB(i, j) = {(uint8_t)r, (uint8_t)g, (uint8_t)b};
             }
         }
 
@@ -121,7 +121,7 @@ bool y4m_extract_color(const std::string& filename, std::vector<mat<vec3b> >& fr
 
 
 
-
+/*
 int main(){
     std::vector<mat<vec3b> > frames;
     std::string filename = "foreman_cif.y4m";
@@ -136,4 +136,4 @@ int main(){
     }
     std::cerr << "Something went wrong...False has been returned..\n";
     return EXIT_FAILURE;
-}
+}*/

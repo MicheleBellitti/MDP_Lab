@@ -95,7 +95,6 @@ bool y4m_extract_gray(const std::string& filename, std::vector<mat<uint8_t> >& f
         break;
 
     }
-    frames.resize(frames.size()-1);
     std::cout << "frames: " << frames.size() << std::endl;
     
     return true;
