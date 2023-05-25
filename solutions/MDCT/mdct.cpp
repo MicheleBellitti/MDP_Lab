@@ -4,6 +4,8 @@
 #include <iterator>
 #include <map>
 #include <cmath>
+#include <math.h>
+#define USE_MAT_DEFINES;
 using namespace std;
 
 vector<int16_t> compute_MDCT(int& N, vector<int16_t>& samples, vector<vector<double>>& table){
@@ -84,10 +86,10 @@ double entropy(vector<int16_t>& samples){
     }
 
     double e = 0;
-    for(int16_t& sample: samples){
-        e -= freq[sample]*log2(freq[sample]);
+    for(auto [sample, fr]: freq){
+        e += (fr)*log2(fr);
     }
-    return e/samples.size();
+    return log2(samples.size()) - e/samples.size();
 }
 
 int main(){
