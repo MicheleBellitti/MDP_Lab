@@ -5,44 +5,80 @@
 #include <map>
 #include <cmath>
 #include <math.h>
-#define USE_MAT_DEFINES;
+#include <algorithm>
 using namespace std;
 
-vector<int16_t> compute_MDCT(int& N, vector<int16_t>& samples, vector<vector<double>>& table){
-    vector<int16_t> coeffs(N, 0);
+template<typename CT, typename ST>
+void win_mdct(const std::vector<ST>& padded, std::vector<CT>& coeffs, size_t offset, size_t N, vector<vector<double> > cos_tab, vector<double> sin_tab)
+{
+	for (size_t k = 0; k < N; ++k) {
+		double Xk = 0.;
+		for (size_t n = 0; n < 2 * N; ++n) {
+			ST xn = padded[offset*N + n];
+			double wn = sin_tab[n];
+			double cn = cos_tab[k][n];
 
-    for(int k=0;k<N;k++){
-        double xk = 0;
-        for(int n=0;n<2*N;++n){
-            double wn = sin(0.5*M_PI*(n+0.5)/N);
-            xk += samples[n]*wn*table[k][n];
-        }
-        coeffs[k] = static_cast<int16_t>(xk);
-    }
-    // Print the read samples
-    // for (const auto& sample : coeffs) {
-    //     std::cout << sample << " ";
-    // }
+			Xk += xn * cn * wn;
+		}
 
-    return coeffs;
+		coeffs[offset*N + k] = CT(round(Xk));
+	}
 }
 
-vector<int16_t> compute_IMDCT(int& N, vector<int16_t>& cosines, vector<vector<double>>& table){
 
-    vector<int16_t> coeffs(2*N, 0);
+template<typename CT, typename ST>
+std::vector<CT> MDCT(const std::vector<ST>& samples, size_t N, vector<vector<double> > cos_tab, vector<double> sin_tab)
+{
+    using namespace std;
+	auto nwin = size_t(ceil(samples.size() / double(N))) + 2;
+	vector<ST> padded(nwin * N, 0);
+	copy(begin(samples), end(samples), begin(padded) + N);
 
-    for(int n=0;n<N;n++){
-        
-        double wn = sin(0.5*M_PI*(n+0.5)/N);
-        double x = 2*wn/N;
-        for(int k=0;k<2*N;++k){
-            
-            x += cosines[n]*table[k][n];
-        }
-        coeffs[n] *= static_cast<int16_t>(x);
-    }
+	vector<CT> coeffs((nwin - 1) * N);
+	for (size_t i = 0; i < nwin - 1; ++i)
+		win_mdct(padded, coeffs, i, N, cos_tab, sin_tab);
 
-    return coeffs;
+	return coeffs;
+}
+
+template<typename CT>
+std::vector<double> win_imdct(const std::vector<CT>& coeffs, size_t offset, size_t N, vector<vector<double> > cos_tab, vector<double> sin_tab)
+{
+    using namespace std;
+    vector<double> recon(2 * N);
+
+	for (size_t n = 0; n < 2 * N; ++n) {
+		double tmpn = 0.;
+		for (size_t k = 0; k < N; ++k) {
+			CT xk = coeffs[offset*N + k];
+			double ck = cos_tab[k][n];
+			tmpn += ck * xk;
+		}
+
+		recon[n] = 2. / N * tmpn;
+	}
+
+	return recon;
+}
+
+template<typename ST, typename CT>
+std::vector<ST> IMDCT(const std::vector<CT>& coeffs, size_t N, vector<vector<double> > cos_tab, vector<double> sin_tab)
+{
+    using namespace std;
+    auto nwin = coeffs.size() / N;
+	vector<ST> samples((nwin - 1) * N);
+
+	vector<double> prev = win_imdct(coeffs, 0, N, cos_tab, sin_tab);
+	for (size_t i = 1; i < nwin; ++i) {
+		vector<double> curr = win_imdct(coeffs, i, N, cos_tab, sin_tab);
+
+		for (size_t j = 0; j < N; ++j)
+			samples[(i - 1)*N + j] = ST(round(curr[j] + prev[N + j]));
+		
+		prev = move(curr);
+	}
+
+	return samples;
 }
 
 bool get_samples(const std::string& filename, std::vector<int16_t>& samples) {
@@ -87,9 +123,11 @@ double entropy(vector<int16_t>& samples){
 
     double e = 0;
     for(auto [sample, fr]: freq){
-        e += (fr)*log2(fr);
+        //cout << sample << " " << fr << endl;
+        e -= (fr)*log2(fr);
     }
-    return log2(samples.size()) - e/samples.size();
+    
+    return log2(samples.size()) + e/samples.size();
 }
 
 int main(){
@@ -102,12 +140,10 @@ int main(){
     cout << "entropy()...called\n";
     double e = entropy(samples);
     cout << "entropy()...computed\n";
-    vector<int16_t> quantized(samples.begin(), samples.end());
+    vector<int16_t> quantized(samples.size());
     ofstream quant_os("quantized_qt.raw", std::ios::binary);
     cout << "quantized_qt.raw...saved\n";
-    for(int16_t& quant: quantized){
-        quant /= 2600;
-    }
+    std::transform(samples.begin(), samples.end(), quantized.begin(), [](int16_t& v){return v/2600;});
     cout << "quantize()...done\n";
 
     double quant_entropy = entropy(quantized);
@@ -117,9 +153,7 @@ int main(){
     cout << "quantized test.raw Entropy: " << quant_entropy << endl;
 
     // dequantize the data and save it
-    for(int16_t& quant: quantized){
-        quant *= 2600;
-    }
+    std::transform(quantized.begin(), quantized.end(), quantized.begin(), [](int16_t& v){return v*2600;});
     quant_os.write(reinterpret_cast<char*>(quantized.data()), 2* quantized.size());
     quant_os.close();
     ofstream err_os("error_qt.raw", std::ios::binary);
@@ -139,8 +173,12 @@ int main(){
      */
 
     int N = 1024;
-    // compute the cosine's matrix
-    
+    // compute the sine's and cosine's matrix
+    std::vector<double> sin_tab;
+	sin_tab.resize(2*N);
+	for (size_t i = 0; i < sin_tab.size(); ++i)
+		sin_tab[i] = sin((M_PI / (2 * N)) * (i + 0.5));
+
     vector<vector<double>> table(N, vector<double>(2*N, 0));
 
     for(int i = 0;i<N;i++){
@@ -148,7 +186,7 @@ int main(){
             table[i][j] = cos((M_PI/N)*(j+0.5+0.5*N)*(i+0.5));
         }
     }
-    auto cosines = compute_MDCT(N, samples, table);
+    auto cosines = MDCT<int16_t>(samples, N, table, sin_tab);
 
     // quantize
     for(auto& cosine: cosines){
@@ -157,6 +195,8 @@ int main(){
 
     quant_entropy = entropy(cosines);
 
+    cout << "MDCT Entropy: " << quant_entropy << endl;
+
     // dequantize
 
     for(auto& cosine: cosines){
@@ -164,6 +204,7 @@ int main(){
     }
 
     // save the dequantized signal
+    cosines = IMDCT<int16_t>(cosines, N, table, sin_tab);
     ofstream os("output.raw", std::ios::binary);
     os.write(reinterpret_cast<char*>(cosines.data()), cosines.size()*2);
     os.close();
