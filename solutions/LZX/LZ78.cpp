@@ -4,80 +4,153 @@
 #include <fstream>
 #include <algorithm>
 #include <map>
+#include <iterator>
 
 // Command line program to encode and decode a file with the LZ78 algorithm
 
 using namespace std;
 
-void error(bool input, const string& filename){
+void error(bool input, const string &filename)
+{
 
-    cerr << "Error opening" << (input? "input":"output") << " file: " << filename << endl;
+    cerr << "Error opening " << (input ? "input" : "output") << " file: " << filename << endl;
 
     return;
-
 }
 
-void syntax(){
+void syntax()
+{
     cerr << "Wrong number of parameters:\nUsage: lz78 [c/d] <input file> <output file>\nTry again!\n";
 }
 
-bool encode(const string& fin, const string& fout,map<int, string> table){
+vector<pair<int, char> > read_compressed(ifstream& is)
+{
+    vector<pair<int, char> > data;
+    while(true){
+        int b1 = is.get();
+        char b2;
+        is.read(&b2, 1);
 
-    ifstream is(fin, std::ios::binary);
-
-    if(!is){
-        error(true, fin);
-        return false;
+        data.push_back(pair<int, char>{b1, b2});
     }
 
-    ofstream os(fout, std::ios::binary);
+    return data;
 
+}
 
-    if(!os){
-        error(false, fin);
-        return false;
-    }
-    
-    // table should be of size 0 by default
+vector<pair<int, char>> compress(const vector<char> &input)
+{
+    unordered_map<string, int> dictionaryMap;
+    string currentSequence;
+    vector<pair<int, char>> compressedData;
+
     int index = 0;
-    vector<int> buffer(128);
-    while(is.good()){
-        is.read(reinterpret_cast<char*>(buffer.data()), 128);
-
-        int actual_size = is.gcount();
-        if(actual_size == 0)
-            break;
-            for(int i=0;i<128;i++){
-                int byte = buffer[i];
-                // the first char is just copied into the table
-                if(i == 0){
-                    table[++index] = to_string(char(byte));
-                    os.put(table.size());
-                    os.put(char(byte));
-                }
-                else{
-                    // Here I have to search for the longest occurrence into the table..
-                    string wdw(char(byte));
-                    // #1 -> start from the bottom => longest occurrencies guaranteed -> not doable(dict)
-                    // #2 -> just keep track of the lenghs and update it only when I find a better match..
-                    int ind=0, len=0;
-                    for(auto& entry: table){
-                            // k,v -> ind,string
-                            int id;
-                            if(id=(entry.second.find(wdw, 0) )!= std::string::npos){
-                                if(len < entry.second.size()-id){
-                                    len = entry.second.size()-id;
-                                    ind = entry.first;
-                                }
-                            else{
-                                break;
-                            }
-                            }
-                    }
-
-                }
-            }
+    for (char c : input)
+    {
+        currentSequence += c;
+        if (dictionaryMap.count(currentSequence) == 0)
+        {
+            dictionaryMap[currentSequence] = ++index;
+            compressedData.emplace_back(dictionaryMap[currentSequence.substr(0, currentSequence.length() - 1)], c);
+            currentSequence = "";
         }
+    }
 
-    return true;
+    if (!currentSequence.empty())
+    {
+        compressedData.emplace_back(dictionaryMap[currentSequence], '\0');
+    }
+
+    return compressedData;
+}
+string decompress(const vector<pair<int, char>> &compressedData)
+{
+    unordered_map<int, string> dictionary;
+    string decompressedData;
+    int index = 0;
+
+    for (const auto &entry : compressedData)
+    {
+        if (entry.first == 0)
+        {
+            decompressedData += entry.second;
+            dictionary[++index] = string(1, entry.second);
+        }
+        else
+        {
+            string sequence = dictionary[entry.first] + entry.second;
+            decompressedData += sequence;
+            dictionary[++index] = sequence;
+        }
+    }
+
+    return decompressedData;
+}
+
+int main(int argc, char **argv)
+{
+    // Usage: LZ78 [c|d|a] <input_f> <output_f>
+    if (argc < 4)
+    {
+        syntax();
+        return EXIT_FAILURE;
+    }
+    const char option = argv[1][0];
+    const string infile(argv[2]);
+    const string outfile(argv[3]);
+
+    ifstream is(infile);
+    if (option == 'c')
+    {
+        vector<char> input(*istream_iterator<char>(is), *istream_iterator<char>());
+        is.close();
+        ofstream os(outfile, ios::binary);
+        vector<pair<int, char>> compressedData = compress(input);
+
+        cout << "Compressed data: ";
+        for (const auto &entry : compressedData)
+        {
+            cout << "(" << entry.first << ", " << entry.second << ") ";
+            os.put(entry.first);
+            os.put(entry.second);
+        }
+        cout << endl;
+    }
+    else if(option == 'd')
+    {
+        // decompress command
+        ifstream is(infile);
+    
+        // I should build the compress data from the compressed file :p
+        auto data = read_compressed(is);
+        is.close();
+        string decompressedData = decompress(data);
+        ofstream os(outfile, ios::binary);
+        cout << "Decompressed data: " << decompressedData << endl;
+        os << "Decompressed data: " << decompressedData;
+        os << decompressedData;
+    }
+    else{
+        vector<char> input(*istream_iterator<char>(is), *istream_iterator<char>());
+        is.close();
+        ofstream os(outfile, ios::binary);
+        vector<pair<int, char>> compressedData = compress(input);
+
+        cout << "Compressed data: ";
+        for (const auto &entry : compressedData)
+        {
+            cout << "(" << entry.first << ", " << entry.second << ") ";
+            os.put(entry.first);
+            os.put(entry.second);
+        }
+        cout << endl;
+        auto decompressed = decompress(compressedData);
+        cout << "Decompressed data: " << decompressed << endl;
+        os << "Decompressed data: " << decompressed;
+        os << decompressed;
+        os.close();
+        
+    }
+
+    return EXIT_SUCCESS;
 }
