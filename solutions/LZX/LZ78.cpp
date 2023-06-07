@@ -23,10 +23,11 @@ void syntax()
     cerr << "Wrong number of parameters:\nUsage: lz78 [c/d] <input file> <output file>\nTry again!\n";
 }
 
-vector<pair<int, char> > read_compressed(ifstream& is)
+vector<pair<int, char>> read_compressed(ifstream &is)
 {
-    vector<pair<int, char> > data;
-    while(true){
+    vector<pair<int, char>> data;
+    while (true)
+    {
         int b1 = is.get();
         char b2;
         is.read(&b2, 1);
@@ -35,7 +36,6 @@ vector<pair<int, char> > read_compressed(ifstream& is)
     }
 
     return data;
-
 }
 
 vector<pair<int, char>> compress(const vector<char> &input)
@@ -98,11 +98,18 @@ int main(int argc, char **argv)
     const char option = argv[1][0];
     const string infile(argv[2]);
     const string outfile(argv[3]);
-
     ifstream is(infile);
+
     if (option == 'c')
     {
-        vector<char> input(*istream_iterator<char>(is), *istream_iterator<char>());
+        is.seekg(0, ios::end);
+        int size = is.tellg();
+        is.seekg(0, ios::beg);
+        vector<char> input(size, 0);
+
+        for_each(input.begin(), input.end(), [&is](char &v)
+                 { is.read(&v, 1); });
+
         is.close();
         ofstream os(outfile, ios::binary);
         vector<pair<int, char>> compressedData = compress(input);
@@ -116,11 +123,11 @@ int main(int argc, char **argv)
         }
         cout << endl;
     }
-    else if(option == 'd')
+    else if (option == 'd')
     {
         // decompress command
         ifstream is(infile);
-    
+
         // I should build the compress data from the compressed file :p
         auto data = read_compressed(is);
         is.close();
@@ -130,7 +137,8 @@ int main(int argc, char **argv)
         os << "Decompressed data: " << decompressedData;
         os << decompressedData;
     }
-    else{
+    else
+    {
         vector<char> input(*istream_iterator<char>(is), *istream_iterator<char>());
         is.close();
         ofstream os(outfile, ios::binary);
@@ -149,7 +157,6 @@ int main(int argc, char **argv)
         os << "Decompressed data: " << decompressed;
         os << decompressed;
         os.close();
-        
     }
 
     return EXIT_SUCCESS;
