@@ -2,7 +2,7 @@
 #include <iostream>
 #include <bitset>
 #include <fstream>
-#include <iterator>
+#include <sstream>
 #include <streambuf>
 #include <vector>
 

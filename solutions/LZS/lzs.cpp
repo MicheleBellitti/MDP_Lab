@@ -1,24 +1,28 @@
 #include "lzs.h"
 #include "../helper/bit_reader.h"
 
-void lzs_decompress(std::ifstream& is, std::ostream& os)
+void lzs_decompress(std::istream& is, std::ostream& os)
 {
     if(!is || !os){
         std::cerr << "Error opening input or output files\n";
         return;
     }
     bitreader br(is);
-    std::string buffer;
-    std::string out;
-
+    
+    std::ostringstream out;
+    // circular buffer
+    std::vector<uint8_t> buffer(2000);
     // I try to read bits directly from stdin
-    while(is.good()){
+    while(!is.eof()){
         uint8_t bit = br.read_bit();
-        if(br.fail())
-            break;
+
         
-        buffer = out.substr(out.size()- (out.size()>= 2000?2000:out.size()), out.size()>= 2000?2000:out.size());
-        std::cout << "buffer: " << buffer << std::endl;
+        buffer.resize(out.str().size() >=2000?2000:out.str().size());
+        // fill the buffer
+        for(int j=0;j<buffer.size();j++){
+            buffer[j] = out.str()[j];
+        }
+        std::cout << "buffer size: " << buffer.size() << std::endl;
         if(bit == 1){
             uint16_t offset = 0, lenght=0;
             // read next bit
@@ -34,10 +38,6 @@ void lzs_decompress(std::ifstream& is, std::ostream& os)
             }
 
             // lenght
-
-            // some code for getting the lenght right
-
-            // try #1: read two bits at a time and check its value
             bool found = false;
             int size = 0;
             while(true){
@@ -61,11 +61,11 @@ void lzs_decompress(std::ifstream& is, std::ostream& os)
                         }
                     }
                 }
-                if(size == 2 && lenght == 0 || lenght == 1 || lenght == 2){
+                if(size == 2 && (lenght == 0 || lenght == 1 || lenght == 2)){
                     lenght = lenght == 0?2:(lenght == 1?3:4);
                     break;
                 }
-                if(size == 4 && lenght == 12 || lenght == 13 || lenght == 14){
+                if(size == 4 && (lenght == 12 || lenght == 13 || lenght == 14)){
                     lenght = lenght == 12?5:(lenght == 13?6:7);
                     break;
                 }
@@ -73,26 +73,28 @@ void lzs_decompress(std::ifstream& is, std::ostream& os)
             }
             std:: cout << "offset: " << offset << " len: " << lenght << std::endl;
             // copy starting from offset
-            for(int i=0;i<lenght;i++){
-                    out += buffer[buffer.size()-offset+i];
-                    
+                for(int i=0;i<lenght;i++){
+                    uint8_t c = buffer[(buffer.size() - offset + i) % buffer.size()];
+                    out.put(c); 
+      
             }
   
         }
         else{
             // literal byte
             uint8_t byte = br.read(8);
-            out += byte;
+            out.put(byte);  
             std::cout << "literal: " << byte << '\n';
         }
 
     }
-    os << out;
+    os << out.str();
 }
 
 int main(){
-    std::ifstream is("test.txt.lzs");
-    lzs_decompress(is, std::cout);
+    std::ifstream is("prova.txt.lzs");
+    std::ofstream os("prova.txt.decoded");
+    lzs_decompress(is, os);
     return 0;
     
 }
