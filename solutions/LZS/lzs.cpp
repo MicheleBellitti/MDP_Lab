@@ -1,5 +1,5 @@
 #include "lzs.h"
-#include "../helper/bit_reader.h"
+#include "bitreader.h"
 
 void lzs_decompress(std::istream& is, std::ostream& os)
 {
