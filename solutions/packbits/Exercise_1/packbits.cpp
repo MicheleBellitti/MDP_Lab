@@ -145,5 +145,6 @@ int main(int argc, char** argv){
     }else{
         cerr << "\n Wrong option provided.\n It should be one of these: [c/C|d/D]. Try again\n";
         return 1;
+
     }
 }

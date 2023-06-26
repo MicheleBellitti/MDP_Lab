@@ -19,10 +19,10 @@ void lzs_decompress(std::istream& is, std::ostream& os)
         
         buffer.resize(out.str().size() >=2000?2000:out.str().size());
         // fill the buffer
-        for(int j=0;j<buffer.size();j++){
+        for(auto j=0;j<buffer.size();j++){
             buffer[j] = out.str()[j];
         }
-        std::cout << "buffer size: " << buffer.size() << std::endl;
+        //std::cout << "buffer size: " << buffer.size() << std::endl;
         if(bit == 1){
             uint16_t offset = 0, lenght=0;
             // read next bit
@@ -38,7 +38,6 @@ void lzs_decompress(std::istream& is, std::ostream& os)
             }
 
             // lenght
-            bool found = false;
             int size = 0;
             while(true){
                 if(size < 4)
@@ -60,6 +59,7 @@ void lzs_decompress(std::istream& is, std::ostream& os)
                             break;
                         }
                     }
+                    std::cout <<lenght << std::endl;
                 }
                 if(size == 2 && (lenght == 0 || lenght == 1 || lenght == 2)){
                     lenght = lenght == 0?2:(lenght == 1?3:4);
@@ -91,10 +91,10 @@ void lzs_decompress(std::istream& is, std::ostream& os)
     os << out.str();
 }
 
-int main(){
-    std::ifstream is("prova.txt.lzs");
-    std::ofstream os("prova.txt.decoded");
-    lzs_decompress(is, os);
-    return 0;
+ int main(){
+     std::ifstream is("test.txt.lzs");
+     std::ofstream os("test.txt.decoded");
+     lzs_decompress(is, os);
+     return 0;
     
-}
+ }

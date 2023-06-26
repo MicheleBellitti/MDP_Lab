@@ -77,8 +77,9 @@ void decodeLZW(const std::string& inputFile, const std::string& outputFile) {
     while (input >> code) {
         std::string entry;
         if (dictionary.count(code)) {
-            std::cout << code << std::endl;
+            
             entry = dictionary[code];
+            
         } else if (code == nextCode) {
             entry = current + current[0];
         } else {
@@ -91,10 +92,10 @@ void decodeLZW(const std::string& inputFile, const std::string& outputFile) {
 
         // Add the new entry to the dictionary
         dictionary[nextCode++] = current + entry[0];
+        std::cout << '(' << nextCode << "," << dictionary[nextCode-1] << ")\n";
 
         current = entry;
     }
-
     input.close();
     output.close();
 }
