@@ -31,7 +31,8 @@ bool BinaryImage::ReadFromPBM(const std::string& filename){
         is >> h;
     }
     std::cout << w << ' ' << h << std::endl;
-    
+    H = h;
+    W = w; 
     BitReader br(is);
     
     ImageData = std::vector<uint8_t>((int)std::floor((h+7)/8)*w);
