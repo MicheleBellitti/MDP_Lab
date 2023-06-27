@@ -14,4 +14,4 @@ g++ -std=c++20 -c ppm.cpp -o ppm.o
 
 cd $dir
 
-g++ -std=c++20 -Wall $file_name.cpp utils/pgm.o utils/ppm.o -o ${file_name}.exe
+g++ -std=c++20 -Wall $file_name.cpp utils/pgm.o utils/ppm.o -o ${file_name}
