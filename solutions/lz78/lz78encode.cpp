@@ -79,9 +79,9 @@ bool lz78encode(const std::string &input_filename, const std::string &output_fil
     while (true)
     {
         is >> text;
-        if(is.eof())
+        if(is.eof() || is.fail())
             break;
-        // std::cout << text << std::endl;
+        std::cout << text << std::endl;
 
         // write the encoded file
         os << "LZ78"; // magic number
