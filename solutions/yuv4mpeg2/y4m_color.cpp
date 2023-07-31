@@ -28,9 +28,9 @@ void YCbCr_to_RGB(mat<uint8_t>& Y, mat<uint8_t>& Cb, mat<uint8_t>& Cr,mat<vec3b>
             g = g > 255?255:g<0?0:g;
             b = b > 255?255:b<0?0:b;
 
-            frame(i, j)[0] = r;
-            frame(i, j)[1] = g;
-            frame(i, j)[2] = b;
+            frame(i, j)[0] = (uint8_t)r;
+            frame(i, j)[1] = (uint8_t)g;
+            frame(i, j)[2] = (uint8_t)b;
 
         }
     }
